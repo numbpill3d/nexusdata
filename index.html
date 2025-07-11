@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS DATA HUB - Terminal Alpha</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ccff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                linear-gradient(rgba(0, 204, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 204, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Data flow lines */
+        .data-flow {
+            position: fixed;
+            width: 2px;
+            height: 100vh;
+            background: linear-gradient(to bottom, transparent, #00ccff, transparent);
+            animation: dataFlow 3s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        .data-flow:nth-child(1) { left: 15%; animation-delay: 0s; }
+        .data-flow:nth-child(2) { left: 35%; animation-delay: 1s; }
+        .data-flow:nth-child(3) { left: 65%; animation-delay: 2s; }
+        .data-flow:nth-child(4) { left: 85%; animation-delay: 0.5s; }
+
+        @keyframes dataFlow {
+            0%, 100% { opacity: 0; transform: translateY(-100vh); }
+            50% { opacity: 1; transform: translateY(100vh); }
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(45deg, #0f1419 0%, #1a252f 50%, #0f1419 100%);
+            border-bottom: 2px solid #00ccff;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 204, 255, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ccff;
+            text-shadow: 0 0 10px #00ccff;
+            letter-spacing: 3px;
+        }
+
+        /* Spinning globe */
+        .globe-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .globe {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #00ccff;
+            border-radius: 50%;
+            position: relative;
+            animation: spinGlobe 10s linear infinite;
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.5);
+        }
+
+        .globe::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80%;
+            height: 2px;
+            background: #00ccff;
+            transform: translate(-50%, -50%);
+        }
+
+        .globe::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            width: 2px;
+            height: 80%;
+            background: #00ccff;
+            transform: translateX(-50%);
+        }
+
+        @keyframes spinGlobe {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        /* Navigation */
+        .nav {
+            background: #0a0e17;
+            border-bottom: 1px solid #00ccff;
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            padding: 0 20px;
+        }
+
+        .nav-item {
+            padding: 15px 25px;
+            color: #888;
+            text-decoration: none;
+            border-right: 1px solid #333;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #00ccff;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
+        }
+
+        /* Marquee */
+        .marquee-container {
+            background: #000;
+            border: 1px solid #00ccff;
+            margin: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .marquee {
+            color: #00ccff;
+            padding: 10px 0;
+            animation: marqueeScroll 30s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes marqueeScroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Main layout */
+        .container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 20px;
+            padding: 20px;
+            min-height: 80vh;
+        }
+
+        /* Sidebars */
+        .sidebar {
+            flex: 0 0 250px;
+            background: linear-gradient(145deg, #0f1419, #1a252f);
+            border: 2px solid #00ccff;
+            padding: 20px;
+            height: fit-content;
+            position: relative;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ccff, transparent, #00ccff);
+            z-index: -1;
+            animation: borderGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes borderGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .sidebar h3 {
+            color: #00ccff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #00ccff;
+            padding-bottom: 8px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar li:hover {
+            color: #00ccff;
+            padding-left: 10px;
+            border-left: 3px solid #00ccff;
+        }
+
+        .sidebar li::before {
+            content: '> ';
+            color: #00ccff;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #0a0e17;
+            border: 1px solid #00ccff;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: #1a252f;
+            color: #888;
+            cursor: pointer;
+            border-right: 1px solid #00ccff;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab:hover, .tab.active {
+            background: #00ccff;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
+        }
+
+        /* Tab content */
+        .tab-content {
+            background: linear-gradient(145deg, #0f1419, #1a252f);
+            border: 2px solid #00ccff;
+            padding: 30px;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Windows */
+        .window {
+            background: linear-gradient(145deg, #0f1419, #1a252f);
+            border: 2px solid #00ccff;
+            margin: 15px 0;
+            position: relative;
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+        }
+
+        .window-header {
+            background: #00ccff;
+            color: #000;
+            padding: 10px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .window-content {
+            padding: 20px;
+        }
+
+        /* Scrollbox */
+        .scrollbox {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #00ccff;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .scrollbox::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbox::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        .scrollbox::-webkit-scrollbar-thumb {
+            background: #00ccff;
+        }
+
+        /* Image gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            background: linear-gradient(45deg, #00ccff, #0088cc);
+            border: 2px solid #00ccff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 204, 255, 0.8);
+        }
+
+        /* Buttons */
+        .btn {
+            background: transparent;
+            border: 2px solid #00ccff;
+            color: #00ccff;
+            padding: 12px 25px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            margin: 5px;
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+        }
+
+        .btn:hover {
+            background: #00ccff;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.6);
+        }
+
+        /* Collapsible */
+        .collapsible {
+            margin: 15px 0;
+        }
+
+        .collapsible-header {
+            background: #1a252f;
+            border: 1px solid #00ccff;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-content {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00ccff;
+            border-top: none;
+            padding: 20px;
+            display: none;
+        }
+
+        .collapsible.open .collapsible-content {
+            display: block;
+        }
+
+        /* Visitor counter */
+        .visitor-counter {
+            background: #000;
+            border: 2px solid #00ccff;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
+        }
+
+        .counter-digits {
+            color: #00ccff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ccff;
+            letter-spacing: 3px;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(45deg, #0f1419 0%, #1a252f 50%, #0f1419 100%);
+            border-top: 2px solid #00ccff;
+            padding: 30px 0;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .footer-section h4 {
+            color: #00ccff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #888;
+            line-height: 1.6;
+            text-decoration: none;
+        }
+
+        .footer-section a:hover {
+            color: #00ccff;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                flex: none;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-content {
+                flex-wrap: wrap;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Popup */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(145deg, #0f1419, #1a252f);
+            border: 3px solid #00ccff;
+            padding: 30px;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
+        }
+
+        .popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1999;
+            display: none;
+        }
+
+        .popup-overlay.show {
+            display: block;
+        }
+
+        /* Animated text */
+        .animated-text {
+            color: #00ccff;
+            font-size: 20px;
+            margin: 20px 0;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            from { text-shadow: 0 0 5px #00ccff; }
+            to { text-shadow: 0 0 20px #00ccff, 0 0 30px #00ccff; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Data flow lines -->
+    <div class="data-flow"></div>
+    <div class="data-flow"></div>
+    <div class="data-flow"></div>
+    <div class="data-flow"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">NEXUS DATA HUB</div>
+            <div class="globe-container">
+                <div class="globe"></div>
+            </div>
+            <div style="color: #888; font-size: 12px;">
+                SYSTEM STATUS: ONLINE | SECURITY LEVEL: ALPHA
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="#" class="nav-item active">DASHBOARD</a>
+            <a href="#" class="nav-item">DATA STREAMS</a>
+            <a href="#" class="nav-item">ANALYTICS</a>
+            <a href="#" class="nav-item">SECURITY</a>
+            <a href="#" class="nav-item">ARCHIVES</a>
+            <a href="#" class="nav-item">TERMINAL</a>
+        </div>
+    </nav>
+
+    <!-- Marquee -->
+    <div class="marquee-container">
+        <div class="marquee">
+            *** BREAKING: Neural network optimization achieved 99.7% efficiency *** Quantum encryption protocols updated *** Global data synchronization in progress *** New satellite links established *** System performance nominal ***
+        </div>
+    </div>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Left sidebar -->
+        <div class="sidebar">
+            <h3>System Status</h3>
+            <ul>
+                <li>CPU Usage: 47%</li>
+                <li>Memory: 8.2GB/16GB</li>
+                <li>Network: 98.3% uptime</li>
+                <li>Storage: 2.4TB free</li>
+                <li>Active Connections: 2,847</li>
+                <li>Security Level: HIGH</li>
+                <li>Last Update: 2m ago</li>
+            </ul>
+
+            <h3>Quick Access</h3>
+            <ul>
+                <li>Emergency Protocols</li>
+                <li>Backup Systems</li>
+                <li>Diagnostic Tools</li>
+                <li>User Management</li>
+                <li>System Logs</li>
+                <li>Configuration</li>
+            </ul>
+
+            <div class="visitor-counter">
+                <div>VISITORS TODAY</div>
+                <div class="counter-digits" id="visitorCount">001,337</div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(event, 'overview')">OVERVIEW</div>
+                <div class="tab" onclick="switchTab(event, 'data')">DATA ANALYSIS</div>
+                <div class="tab" onclick="switchTab(event, 'reports')">REPORTS</div>
+                <div class="tab" onclick="switchTab(event, 'settings')">SETTINGS</div>
+            </div>
+
+            <div class="tab-content">
+                <!-- Overview tab -->
+                <div class="tab-pane active" id="overview">
+                    <div class="animated-text">WELCOME TO THE DATA NEXUS</div>
+                    
+                    <div class="window">
+                        <div class="window-header">SYSTEM OVERVIEW</div>
+                        <div class="window-content">
+                            <p>The Nexus Data Hub represents the pinnacle of information processing technology. Our advanced neural networks continuously analyze data streams from across the global network, providing real-time insights and predictive analytics.</p>
+                            
+                            <button class="btn" onclick="showPopup()">LAUNCH DIAGNOSTIC</button>
+                            <button class="btn">ACCESS ARCHIVES</button>
+                            <button class="btn">SECURITY SCAN</button>
+                        </div>
+                    </div>
+
+                    <div class="window">
+                        <div class="window-header">RECENT ACTIVITY</div>
+                        <div class="window-content">
+                            <div class="scrollbox">
+                                <p>15:42:33 - Data synchronization completed</p>
+                                <p>15:41:22 - Security scan initiated</p>
+                                <p>15:40:15 - Neural network optimization started</p>
+                                <p>15:39:44 - Backup sequence successful</p>
+                                <p>15:38:12 - New user authentication</p>
+                                <p>15:37:55 - Quantum encryption updated</p>
+                                <p>15:36:33 - System performance check</p>
+                                <p>15:35:21 - Data stream validation</p>
+                                <p>15:34:09 - Archive indexing complete</p>
+                                <p>15:33:44 - Network topology updated</p>
+                                <p>15:32:18 - Firewall rules optimized</p>
+                                <p>15:31:02 - Database maintenance finished</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="collapsible">
+                        <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                            <span>ADVANCED DIAGNOSTICS</span>
+                            <span>+</span>
+                        </div>
+                        <div class="collapsible-content">
+                            <p>Advanced diagnostic tools allow for deep system analysis and performance optimization. These tools provide detailed insights into system behavior, resource utilization, and potential bottlenecks.</p>
+                            <div class="gallery">
+                                <div class="gallery-item">CPU LOAD</div>
+                                <div class="gallery-item">MEMORY MAP</div>
+                                <div class="gallery-item">NETWORK I/O</div>
+                                <div class="gallery-item">DISK USAGE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Analysis tab -->
+                <div class="tab-pane" id="data">
+                    <div class="window">
+                        <div class="window-header">DATA ANALYSIS SUITE</div>
+                        <div class="window-content">
+                            <p>Real-time data processing and analysis capabilities with advanced machine learning algorithms and predictive modeling.</p>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                                <div style="background: rgba(0, 204, 255, 0.1); padding: 15px; border: 1px solid #00ccff;">
+                                    <h4>PROCESSING RATE</h4>
+                                    <div style="font-size: 24px; color: #00ccff;">2.4 TB/hr</div>
+                                </div>
+                                <div style="background: rgba(0, 204, 255, 0.1); padding: 15px; border: 1px solid #00ccff;">
+                                    <h4>ACCURACY RATE</h4>
+                                    <div style="font-size: 24px; color: #00ccff;">99.7%</div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn">START ANALYSIS</button>
+                            <button class="btn">VIEW RESULTS</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports tab -->
+                <div class="tab-pane" id="reports">
+                    <div class="window">
+                        <div class="window-header">SYSTEM REPORTS</div>
+                        <div class="window-content">
+                            <p>Comprehensive reporting and analytics dashboard for system performance and data insights.</p>
+                            
+                            <div class="scrollbox">
+                                <p>• Daily Performance Report - Generated 09:00</p>
+                                <p>• Security Audit Log - Generated 08:30</p>
+                                <p>• Data Quality Assessment - Generated 08:00</p>
+                                <p>• Network Traffic Analysis - Generated 07:30</p>
+                                <p>• User Activity Summary - Generated 07:00</p>
+                                <p>• System Health Check - Generated 06:30</p>
+                                <p>• Backup Verification Report - Generated 06:00</p>
+                            </div>
+                            
+                            <button class="btn">GENERATE REPORT</button>
+                            <button class="btn">EXPORT DATA</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings tab -->
+                <div class="tab-pane" id="settings">
+                    <div class="window">
+                        <div class="window-header">SYSTEM CONFIGURATION</div>
+                        <div class="window-content">
+                            <p>Configure system parameters and user preferences for optimal performance.</p>
+                            
+                            <div style="margin: 20px 0;">
+                                <label style="display: block; margin: 10px 0;">
+                                    <input type="checkbox" checked> Enable real-time monitoring
+                                </label>
+                                <label style="display: block; margin: 10px 0;">
+                                    <input type="checkbox" checked> Automatic backup
+                                </label>
+                                <label style="display: block; margin: 10px 0;">
+                                    <input type="checkbox"> Debug mode
+                                </label>
+                                <label style="display: block; margin: 10px 0;">
+                                    <input type="checkbox" checked> Security alerts
+                                </label>
+                            </div>
+                            
+                            <button class="btn">SAVE SETTINGS</button>
+                            <button class="btn">RESET TO DEFAULT</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right sidebar -->
+        <div class="sidebar">
+            <h3>Data Streams</h3>
+            <ul>
+                <li>Global Network Feed</li>
+                <li>Satellite Uplinks</li>
+                <li>Quantum Channels</li>
+                <li>Neural Networks</li>
+                <li>Security Monitors</li>
+                <li>Archive Systems</li>
+            </ul>
+
+            <h3>External Links</h3>
+            <ul>
+                <li><a href="#" style="color: inherit; text-decoration: none;">Central Command</a></li>
+                <li><a href="#" style="color: inherit; text-decoration: none;">Satellite Network</a></li>
+                <li><a href="#" style="color: inherit; text-decoration: none;">Research Division</a></li>
+                <li><a href="#" style="color: inherit; text-decoration: none;">Security Bureau</a></li>
+                <li><a href="#" style="color: inherit; text-decoration: none;">Data Archives</a></li>
+            </ul>
+
+            <div class="window" style="margin-top: 20px;">
+                <div class="window-header">THREAT LEVEL</div>
+                <div class="window-content" style="text-align: center;">
+                    <div style="font-size: 36px; color: #00ff00;">LOW</div>
+                    <p>All systems secure</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Nexus</h4>
+                <p>The most advanced data processing and analysis platform in existence. Connecting minds across the digital frontier.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Services</h4>
+                <p><a href="#">Data Analysis</a></p>
+                <p><a href="#">Neural Networks</a></p>
+                <p><a href="#">Quantum Processing</a></p>
+                <p><a href="#">Security Solutions</a></p>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Nexus Central Command</p>
+                <p>Sector 7-Alpha</p>
+                <p>Terminal: NEXUS-001</p>
+            </div>
+            <div class="footer-section">
+                <h4>System Info</h4>
+                <p>Version: 3.14.159</p>
+                <p>Build: 2025.07.11</p>
+                <p>Uptime: 99.97%</p>
+                <p>Security: Alpha-7</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup -->
+    <div class="popup-overlay" id="popupOverlay" onclick="hidePopup()"></div>
+    <div class="popup" id="popup">
+        <h3 style="color: #00ccff; margin-bottom: 15px;">DIAGNOSTIC RUNNING</h3>
+        <p>System diagnostic initiated. Scanning all subsystems...</p>
+        <div style="margin: 20px 0; color: #00ff00;">
+            <p>✓ CPU: OPTIMAL</p>
+            <p>✓ MEMORY: STABLE</p>
+            <p>✓ NETWORK: SECURE</p>
+            <p>✓ STORAGE: HEALTHY</p>
+        </div>
+        <button class="btn" onclick="hidePopup()">CLOSE</button>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(event, tabId) {
+            // Remove active class from all tabs and panes
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding pane
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Collapsible content
+        function toggleCollapsible(element) {
+            const collapsible = element.parentElement;
+            const icon = element.querySelector('span:last-child');
+            
+            collapsible.classList.toggle('open');
+            icon.textContent = collapsible.classList.contains('open') ? '-' : '+';
+        }
+
+        // Popup functions
+        function showPopup() {
+            document.getElementById('popupOverlay').classList.add('show');
+            document.getElementById('popup').classList.add('show');
+        }
+
+        function hidePopup() {
+            document.getElementById('popupOverlay').classList.remove('show');
+            document.getElementById('popup').classList.remove('show');
+        }
+
+        // Visitor counter animation
+        function animateCounter() {
+            const counter = document.getElementById('visitorCount');
+            let current = parseInt(counter.textContent.replace(/,/g, ''));
+            const increment = Math.floor(Math.random() * 5) + 1;
+            current += increment;
+            
+            counter.textContent = current.toLocaleString().padStart(7, '0');
+        }
+
+        // Update visitor counter every 30 seconds
+        setInterval(animateCounter, 30000);
+
+        // Navigation hover effects
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Random system updates
+        function addSystemUpdate() {
+            const updates = [
+                'Neural pathway optimization complete',
+                'Quantum entanglement stabilized',
+                'Data compression algorithm improved',
+                'Security protocols updated',
+                'Backup verification successful',
+                'Network topology optimized',
+                'Cache coherency maintained',
+                'Load balancing adjusted'
+            ];
+            
+            const scrollbox = document.querySelector('.scrollbox');
+            const time = new Date().toLocaleTimeString();
+            const update = updates[Math.floor(Math.random() * updates.length)];
+            
+            const newUpdate = document.createElement('p');
+            newUpdate.textContent = `${time} - ${update}`;
+            scrollbox.insertBefore(newUpdate, scrollbox.firstChild);
+            
+            // Remove old updates if too many
+            if (scrollbox.children.length > 20) {
+                scrollbox.removeChild(scrollbox.lastChild);
+            }
+        }
+
+        // Add new system updates every 45 seconds
+        setInterval(addSystemUpdate, 45000);
+
+        // Gallery item interactions
+        document.querySelectorAll('.gallery-item').forEach(item => {
+            item.addEventListener('click', function() {
+                this.style.background = 'linear-gradient(45deg, #00ff00, #00cc00)';
+                setTimeout(() => {
+                    this.style.background = 'linear-gradient(45deg, #00ccff, #0088cc)';
+                }, 500);
+            });
+        });
+
+        // Add glitch effect occasionally
+        function glitchEffect() {
+            const elements = document.querySelectorAll('.window-header, .logo, .animated-text');
+            const element = elements[Math.floor(Math.random() * elements.length)];
+            
+            element.style.transform = 'skewX(2deg)';
+            element.style.filter = 'hue-rotate(90deg)';
+            
+            setTimeout(() => {
+                element.style.transform = '';
+                element.style.filter = '';
+            }, 100);
+        }
+
+        // Trigger glitch effect randomly
+        setInterval(() => {
+            if (Math.random() < 0.1) { // 10% chance
+                glitchEffect();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
